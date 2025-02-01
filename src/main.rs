@@ -218,6 +218,10 @@ async fn main() -> Result<()> {
         .as_array()
         .unwrap();
     let tracks: Vec<TrackInfo> = tracks_json.iter().map(TrackInfo::from).collect();
+    if tracks.is_empty() {
+        println!("Track not found");
+        return Ok(());
+    }
     debug!("Tracks: {:?}", tracks);
 
     // Select track
@@ -328,13 +332,14 @@ async fn save_cache<P: AsRef<Path>>(cache_file: P, cache_data: &AuthCache) -> Re
 
 fn format_search_query<S1, S2, S3>(title: S1, artist: S2, album: S3) -> String
 where
-    S1: ToString,
+    S1: AsRef<str>,
     S2: AsRef<str>,
     S3: AsRef<str>,
 {
-    let mut search_query = title.to_string();
-    search_query.push_str(&format!("%20artist:{}", artist.as_ref()));
-    search_query.push_str(&format!("%20album:{}", album.as_ref()));
+    let mut search_query = title.as_ref().to_string();
+    search_query.push_str(&format!(" track:{}", title.as_ref()));
+    search_query.push_str(&format!(" artist:{}", artist.as_ref()));
+    search_query.push_str(&format!(" album:{}", album.as_ref()));
     search_query
 }
 
