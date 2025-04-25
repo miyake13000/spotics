@@ -4,7 +4,7 @@ pub mod resource;
 
 pub type Result<T> = std::result::Result<T, WebPlayerError>;
 
-const USER_AGENT_CONTENT: &str = "curl/8.5.0";
+const USER_AGENT_CONTENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
 use auth::{AuthClient, AuthData};
 use lyric::LyricsClient;
