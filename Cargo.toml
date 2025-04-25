@@ -1,6 +1,6 @@
 [package]
 name = "spotics"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 authors = ["miyake13000"]
 description = "CLI tool to fetch lyrics from Spotify and write to your music"
