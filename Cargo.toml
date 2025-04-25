@@ -9,17 +9,17 @@ license-file = "LICENSE"
 readme = "README.md"
 
 [dependencies]
-anyhow = "1.0.95"
-chrono = { version = "0.4.39", features = ["serde", "now"] }
-clap = { version = "4.5.27", features = ["derive", "env"] }
-dialoguer = "0.11.0"
-env_logger = "0.11.6"
-futures = "0.3.31"
-id3 = "1.16.1"
-log = "0.4.25"
-reqwest = { version = "0.12.12", default-features = false, features = ["rustls-tls"] }
-serde = { version = "1.0.217", features = ["derive"] }
-serde_json = "1.0.137"
-thiserror = "2.0.11"
-tokio = { version = "1.43.0", features = ["full"] }
-totp-rs = "5.7.0"
+anyhow = "1.0"
+chrono = { version = "0.4", features = ["serde", "now"] }
+clap = { version = "4.5", features = ["derive", "env"] }
+dialoguer = "0.11"
+env_logger = "0.11"
+futures = "0.3"
+id3 = "1.16"
+log = "0.4"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+tokio = { version = "1.44", features = ["full"] }
+totp-rs = "5.7"
