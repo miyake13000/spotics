@@ -1,5 +1,11 @@
 # Spotics
-Download lyrics (lrc file) from spotify with reading mp3 tag
+Embed Lrics (LRC format) from spotify
+
+## Changes
+* It is very hard to get lyrics from spotify in this program due to spotify's highly complexed authentication process
+* For more datails, read [this discussion](https://github.com/librespot-org/librespot/discussions/1562)
+* From these reasons, I deleted the function to get lyrics.
+* In the future, I want to try scraping using Selemium...
 
 ## Installation
 
@@ -8,41 +14,32 @@ Download lyrics (lrc file) from spotify with reading mp3 tag
 wget https://github.com/miyake13000/spotics/releases/latest/download/spotics
 chmod +x spotics
 ```
-2. Create app from [Spotify Developers Dashbord](https://developer.spotify.com/dashboard)
-3. Get `Client ID` and `Client secret` and write them to `~/.config/spotics/tokens.json`
-```json
-{
-    "id": "0123456789abcdef",
-    "secret": "zyxwvuts9876543210"
-}
-```
-4. Get `sp_dc` Cookie from your Browser on Spotify site.
-    1. Open Soptify
-    2. Enter <F12> to open development tool
-    3. Open 'Application' tab
-    4. Select 'Cookies' tag
-    5. Find `sp_dc` key and copy its value
-5. Write `sp_dc` to tokens.json
-```json
-{
-    "id": "0123456789abcdef",
-    "secret": "zyxwvuts9876543210",
-    "sp_dc": "ABCdefGHIjklMNOpqrSTUvwxZ"
-}
-```
 
 ## Usage
+1. Download Spotify Lyric JSON
+    1. Access [Spotify](https://open.spotify.com/)
+    2. Open developer tool with F12 and click "Network" tab
+    3. Enter "color" to "Filter" input area
+    4. Search and open the music you want to embed the lyric
+    5. After the lyric appeared, click and open JSON response in "network" tab
+    6. Download or copy that JSON.
+    * The JSON is like:
+    ```json
+    {"lyrics":{"syncType":"LINE_SYNCED","lines":[{"startTimeMs":"18404","words":"blahblahblah","syllables":[],"endTimeMs":"0","transliteratedWords":""},...
+    ```
+
+2. Embed Lyric to mp3 file
 ```bash
-spotics your_music.mp3
-```
-* mp3 file must have title, album, artist with id3 v2.x tag
-```
-$ spotics your_music.mp3
+# Read Spotify Lyric JSON from file
+spotics -f spotify_lyric.json your_music.mp3
 
-? Select track for Title: 'Your music', Artist: 'You', Album: 'Your best album'
-Select one or quit with 'q' ›
-› Title: "Your music",  Artist: "You",  Album: "Your best album"
+# Or, from STDIN (This is usefull to paste from clipboard)
+cat spotidy_lyric.json | spotics -i your_music.mp3
+```
 
+* mp3 file must have id3 v2.x tag
+```
+$ spotics -f spotiy_lyric.json your_music.mp3
 [00:00.500] Once upon a time, there was you
 ...
 

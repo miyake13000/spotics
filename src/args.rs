@@ -1,4 +1,4 @@
-use clap::{Parser, ValueEnum};
+use clap::Parser;
 
 #[derive(Debug, Parser)]
 #[command(version, author)]
@@ -6,44 +6,26 @@ pub struct Args {
     /// Target file
     ///
     /// This file should be audio file that has ID3 tag
-    pub file: String,
+    pub music_file: String,
 
-    /// Track Selection Mode
-    #[arg(short = 'm', long, default_value = "manual")]
-    pub mode: Mode,
+    /// Read Spotify Lyric JSON from file
+    ///
+    /// For mare details, see https://github.com/miyake13000/spotics
+    /// If this flag and `--stdin` are both specified, this flag will be ignored
+    #[arg(short = 'f', long)]
+    pub lyric_file: Option<String>,
 
-    /// Skip confirmation
+    /// Read Spotify Lyric JSON from STDIN
+    ///
+    /// If this flag and `--lyric-file` are both specified, `--lyric-file` will be ignored
+    #[arg(short = 'i', long)]
+    pub stdin: bool,
+
+    /// Skip confirmation for writing lyc to file
     #[arg(short = 'y', long, default_value_t = false)]
     pub yes: bool,
 
-    /// Not print lyrics
+    /// Not print converted LRC
     #[arg(short = 's', long, default_value_t = false)]
     pub silent: bool,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
-pub enum Mode {
-    /// Select track by user
-    Manual,
-
-    /// Select track which has completely same title, artist, album
-    Auto,
-
-    /// Select track by Auto mode, if not found, select track with Manual mode
-    Middle,
-}
-
-#[allow(dead_code)]
-impl Mode {
-    pub fn is_manual(&self) -> bool {
-        *self == Self::Manual
-    }
-
-    pub fn is_auto(&self) -> bool {
-        *self == Self::Auto
-    }
-
-    pub fn is_middle(&self) -> bool {
-        *self == Self::Middle
-    }
 }

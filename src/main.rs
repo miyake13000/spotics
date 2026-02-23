@@ -3,14 +3,10 @@ mod args;
 use anyhow::{Context, Result};
 use args::Args;
 use clap::Parser;
-use dialoguer::{theme::ColorfulTheme, Confirm, Select};
+use dialoguer::{theme::ColorfulTheme, Confirm};
 use id3::{frame::Lyrics, Tag, TagLike};
 use log::debug;
-use spotics::{ClientBuilder, Lrc, SearchQuery, TrackInfo};
-use std::path::PathBuf;
-
-const PATH_TOKEN: &str = ".config/spotics";
-const PATH_CACHE: &str = ".cache/spotics";
+use spotics::{Lrc, SpotifyLyric};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -18,54 +14,36 @@ async fn main() -> Result<()> {
     env_logger::init();
     debug!("{:?}", args);
 
-    // Get token and cache path
-    let homedir = std::env::var("HOME").context("Env var 'HOME' is not set")?;
-    let homedir = PathBuf::from(homedir);
-    let token_path = homedir.join(PATH_TOKEN);
-    let cache_path = homedir.join(PATH_CACHE);
-    debug!("Token path: {:?}", token_path);
-    debug!("Cache path: {:?}", token_path);
-
-    // Create client
-    let client = ClientBuilder::new(token_path)
-        .use_cache(cache_path)
-        .build()
-        .await?;
-    debug!("Client: {:?}", client);
-
     // Get tag from specified file
-    let tag = Tag::read_from_path(&args.file)
-        .with_context(|| format!("Failed to read specified file: {}", args.file))?;
+    let tag = Tag::read_from_path(&args.music_file)
+        .with_context(|| format!("Failed to read specified file: {}", args.music_file))?;
 
-    // Search track
-    let query = create_search_query(&tag)?;
-    debug!("Query: {:?}", query);
-    let tracks = client.search(query).await?;
-    debug!("Tracks: {:?}", tracks);
-
-    // Select track
-    let track = if args.mode.is_manual() {
-        select_track_by_user(&tracks, &tag)?
+    // Get lyrics from specified source
+    let lyric_str = if args.stdin {
+        debug!("Reading lyric JSON from STDIN");
+        let mut buf = String::new();
+        std::io::stdin()
+            .read_line(&mut buf)
+            .context("Failed to read from STDIN")?;
+        buf
+    } else if let Some(lyric_file) = args.lyric_file {
+        debug!("Reading lyric JSON from file: {}", lyric_file);
+        std::fs::read_to_string(lyric_file).context("Failed to read lyric file")?
     } else {
-        let track = select_track_by_identity(&tracks, &tag);
-        if track.is_some() {
-            println!("Selected track: {:?}", track.as_ref().unwrap());
-            track
-        } else if args.mode.is_middle() {
-            select_track_by_user(&tracks, &tag)?
-        } else {
-            None
-        }
+        return Err(anyhow::anyhow!(
+            "No lyric source specified. Please read usage with `-h`"
+        ));
     };
-    if track.is_none() {
-        println!("Track not found");
-        return Ok(());
-    }
-    let track = track.unwrap();
-    debug!("Selected track: {:?}", track);
 
-    // Fetch lyrics
-    let lyrics = client.fetch_lyrics(track).await?;
+    // Convert lyric JSON to LRC
+    let lyric_json: serde_json::Value =
+        serde_json::from_str(&lyric_str).context("Failed to parse lyric JSON")?;
+    let spotify_lyric =
+        SpotifyLyric::try_from(&lyric_json).context("Failed to parse lyric JSON")?;
+    let lyrics = Lrc::new(spotify_lyric);
+    debug!("Lyrics: {}", lyrics);
+
+    // Print converted LRC and confirm writing to file
     if !args.silent {
         println!("{}", lyrics);
     }
@@ -73,50 +51,12 @@ async fn main() -> Result<()> {
         println!("Aborted");
         return Ok(());
     }
-    debug!("Lyrics: {}", lyrics);
 
     // Write lyrics to file
     let tag = add_lyrics_to_tag(lyrics, tag);
-    write_lyrics(tag, &args.file)?;
+    write_lyrics(tag, &args.music_file)?;
 
     Ok(())
-}
-
-fn create_search_query(tag: &Tag) -> Result<SearchQuery> {
-    let title = tag.title().context("Not found 'title' tag")?;
-    let artist = tag.artist().context("Not found 'artist' tag")?;
-    let album = tag.album().context("Not found 'album' tag")?;
-
-    Ok(SearchQuery::new(title, artist, album))
-}
-
-fn select_track_by_user<'a>(tracks: &'a [TrackInfo], tag: &Tag) -> Result<Option<&'a TrackInfo>> {
-    let prompt = format!(
-        "Select track for Title: '{}', Artist: '{}', Album: '{}'\n",
-        tag.title().unwrap(),
-        tag.artist().unwrap(),
-        tag.album().unwrap()
-    );
-    let prompt = prompt + "Select one or quit with 'q'";
-    let selection = Select::with_theme(&ColorfulTheme::default())
-        .with_prompt(prompt)
-        .items(tracks)
-        .interact_opt()
-        .context("Failed to select track")?;
-
-    Ok(selection.map(|i| &tracks[i]))
-}
-
-fn select_track_by_identity<'a>(tracks: &'a [TrackInfo], tag: &Tag) -> Option<&'a TrackInfo> {
-    let title = tag.title().unwrap();
-    let artist = tag.artist().unwrap();
-    let album = tag.album().unwrap();
-
-    let track = tracks
-        .iter()
-        .find(|track| track.title == title && track.artist == artist && track.album == album);
-
-    track
 }
 
 fn confirm_write_lyrics() -> Result<bool> {

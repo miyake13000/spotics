@@ -1,13 +1,12 @@
+use super::SpotifyLyric;
 use std::fmt::Display;
 
-use super::Lyrics;
-
 pub struct Lrc {
-    lyrics: Lyrics,
+    lyrics: SpotifyLyric,
 }
 
 impl Lrc {
-    pub fn new(lyrics: Lyrics) -> Self {
+    pub fn new(lyrics: SpotifyLyric) -> Self {
         Self { lyrics }
     }
 }
